@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+  </head>
+  <body>
+    <h1>Sign Up</h1>
+    <form action="" method="POST">
+      <label for="username">Username</label>
+      <input
+        name="username"
+        placeholder="username"
+        type="text"
+        required="true"
+        value="<% undefined === user ? '' : user.name %>"
+      />
+      <label for="password">Password</label>
+      <input
+        name="password"
+        type="password"
+        required="true"
+        value="<% undefined === user ? '' : user.password %>"
+      />
+      <button>Sign Up</button>
+    </form>
+  </body>
+</html>

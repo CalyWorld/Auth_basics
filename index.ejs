@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>User List</title>
+  </head>
+  <body>
+    <h1>User List</h1>
+    <ul>
+      <% users.forEach(user => { %>
+      <li>username: <%= user.username %>. password:<%= user.password %></li>
+      <% }); %>
+    </ul>
+  </body>
+</html>
