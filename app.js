@@ -2,7 +2,6 @@ const express = require("express");
 const path = require("path");
 const session = require("express-session");
 const passport = require("passport");
-const Strategy = require("passport-local");
 const LocalStrategy = require("passport-local").Strategy;
 const mongoose = require("mongoose");
 const { body, validationResult } = require("express-validator");
@@ -31,15 +30,47 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.urlencoded({ extended: false }));
 
-app.get("/", async (req, res) => {
+passport.use(
+  new LocalStrategy(async (username, password, done) => {
+    try {
+      const user = await User.findOne({ username: username });
+      if (!user) {
+        return done(null, false, { message: "Incorrect Username" });
+      }
+      if (user.password !== password) {
+        return done(null, false, { message: "Incorrect Password" });
+      }
+      return done(null, user);
+    } catch (err) {
+      console.log("error logging in");
+      return done(err);
+    }
+  }),
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
   try {
-    const users = await User.find({}, "username password").exec();
-    res.render("index", { users }); // Pass the "users" data to the template
-  } catch (error) {
-    // Handle any errors here
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err);
   }
+});
+
+app.post(
+  "/log-in",
+  passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "/",
+  }),
+);
+
+app.get("/", async (req, res) => {
+  res.render("index", { user: req.user });
 });
 
 app.get("/sign-up", (req, res) =>
@@ -47,6 +78,7 @@ app.get("/sign-up", (req, res) =>
     user: "",
   }),
 );
+
 app.post("/sign-up", async (req, res, next) => {
   body("username", "Username must not be empty")
     .trim()
@@ -74,6 +106,15 @@ app.post("/sign-up", async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
+});
+
+app.get("/log-out", (req, res, next) => {
+  req.logOut((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/");
+  });
 });
 
 app.listen(3000, () => console.log("app listening on port 3000!"));
