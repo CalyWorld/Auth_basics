@@ -1,3 +1,4 @@
+const bcrypt = require("bcryptjs");
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
@@ -37,7 +38,8 @@ passport.use(
       if (!user) {
         return done(null, false, { message: "Incorrect Username" });
       }
-      if (user.password !== password) {
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
         return done(null, false, { message: "Incorrect Password" });
       }
       return done(null, user);
@@ -96,16 +98,22 @@ app.post("/sign-up", async (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.render("sign_up", { user: userInput, errors: errors.array() });
   }
-  try {
-    const user = new User({
-      username: req.body.username,
-      password: req.body.password,
-    });
-    await user.save();
-    res.redirect("/");
-  } catch (err) {
-    return next(err);
-  }
+  bcrypt.hash(req.body.password, 10, async (err, hashedPassword) => {
+    if (err) {
+      return next(err);
+    } else {
+      const user = new User({
+        username: req.body.username,
+        password: hashedPassword,
+      });
+      try {
+        await user.save();
+        res.redirect("/");
+      } catch (err) {
+        return next(err);
+      }
+    }
+  });
 });
 
 app.get("/log-out", (req, res, next) => {
